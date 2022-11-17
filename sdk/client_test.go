@@ -87,13 +87,36 @@ func TestClient_TokenFee(t *testing.T) {
 	t.Log(fee)
 }
 
-func TestClient_TrackerTxsByAcc(t *testing.T) {
+func TestClient_SubscribeTxs_FilterToken(t *testing.T) {
 	accid := "0x4002ED1a1410aF1b4930cF6c479ae373dEbD6223"
 	sub := testClient.SubscribeTxs(schema.FilterQuery{
 		Address:  accid,
 		TokenTag: "arweave,ethereum-ar-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA,0xcc9141efa8c20c7df0778748255b1487957811be",
 	})
 	go func() {
+		// for test
+		time.Sleep(10 * time.Second)
+		sub.Unsubscribe()
+	}()
+
+	for {
+		select {
+		case tx := <-sub.Subscribe():
+			t.Log(tx.RawId, tx.EverHash)
+		case <-sub.quit:
+			return
+		}
+	}
+}
+
+func TestClient_SubscribeTxs_Cursor(t *testing.T) {
+	accid := "0x4002ED1a1410aF1b4930cF6c479ae373dEbD6223"
+	sub := testClient.SubscribeTxs(schema.FilterQuery{
+		StartCursor: 155457,
+		Address:     accid,
+	})
+	go func() {
+		// for test
 		time.Sleep(10 * time.Second)
 		sub.Unsubscribe()
 	}()
