@@ -88,6 +88,7 @@ func TestClient_TokenFee(t *testing.T) {
 }
 
 func TestClient_SubscribeTxs_FilterToken(t *testing.T) {
+	testClient = NewClient("https://api-dev.everpay.io")
 	accid := "0x4002ED1a1410aF1b4930cF6c479ae373dEbD6223"
 	sub := testClient.SubscribeTxs(schema.FilterQuery{
 		Address:  accid,
@@ -110,6 +111,7 @@ func TestClient_SubscribeTxs_FilterToken(t *testing.T) {
 }
 
 func TestClient_SubscribeTxs_Cursor(t *testing.T) {
+	testClient = NewClient("https://api-dev.everpay.io")
 	accid := "0x4002ED1a1410aF1b4930cF6c479ae373dEbD6223"
 	sub := testClient.SubscribeTxs(schema.FilterQuery{
 		StartCursor: 155457,
