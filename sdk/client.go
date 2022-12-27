@@ -7,6 +7,8 @@ import (
 	cacheSchema "github.com/everFinance/go-everpay/cache/schema"
 	paySchema "github.com/everFinance/go-everpay/pay/schema"
 	"github.com/everFinance/go-everpay/sdk/schema"
+	"github.com/everFinance/go-everpay/token"
+	tokSchema "github.com/everFinance/go-everpay/token/schema"
 	"gopkg.in/h2non/gentleman.v2"
 	"gopkg.in/h2non/gentleman.v2/plugins/body"
 )
@@ -41,6 +43,32 @@ func (c *Client) GetInfo() (info schema.Info, err error) {
 
 	info = schema.Info{}
 	err = json.Unmarshal(res.Bytes(), &info)
+	return
+}
+
+func (c *Client) GetTokens() (tokens map[string]*token.Token, err error) {
+	tokens = map[string]*token.Token{}
+	info, err := c.GetInfo()
+	if err != nil {
+		return
+	}
+	for _, tokenInfo := range info.TokenList {
+		targetChains := make([]tokSchema.TargetChain, 0)
+		for _, v := range tokenInfo.CrossChainInfoList {
+			targetChains = append(targetChains, tokSchema.TargetChain{
+				ChainId:   v.ChainId,
+				ChainType: v.ChainType,
+				Decimals:  v.Decimals,
+				TokenID:   v.TokenID,
+			})
+		}
+
+		tok := token.New(
+			tokenInfo.ID, tokenInfo.Symbol, tokenInfo.ChainType, tokenInfo.ChainID,
+			tokenInfo.Decimals, targetChains,
+		)
+		tokens[tok.Tag()] = tok
+	}
 	return
 }
 

@@ -132,3 +132,9 @@ func TestClient_SubscribeTxs_Cursor(t *testing.T) {
 		}
 	}
 }
+
+func TestGetTokens(t *testing.T) {
+	tokens, err := testClient.GetTokens()
+	assert.NoError(t, err)
+	t.Log(len(tokens), tokens)
+}
