@@ -29,3 +29,7 @@ const (
 	TNS101Type = 101
 	TNS102Type = 102
 )
+
+const (
+	ZeroAddress = "0x0000000000000000000000000000000000000000"
+)

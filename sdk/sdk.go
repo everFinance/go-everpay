@@ -102,6 +102,13 @@ func (s *SDK) Deposit(tokenTag string, amount *big.Int, chainType, to, txData st
 func (s *SDK) Burn(tokenTag string, amount *big.Int, chainType, to string) (*paySchema.Transaction, error) {
 	return s.sendBurnTx(tokenTag, chainType, to, amount, "")
 }
+
+func (s *SDK) BurnToEverpay(tokenTag string, amount *big.Int) (*paySchema.Transaction, error) {
+	chainType := tokSchema.ChainTypeEverpay
+	to := tokSchema.ZeroAddress
+	return s.sendBurnTx(tokenTag, chainType, to, amount, "")
+}
+
 func (s *SDK) Mint(tokenTag string, amount *big.Int, chainType, to, txData string) (*paySchema.Transaction, error) {
 	return s.sendMintTx(tokenTag, chainType, to, amount, txData)
 }
