@@ -4,12 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"strings"
 	"sync"
 	"time"
 
 	paySchema "github.com/everFinance/go-everpay/pay/schema"
-	"github.com/everFinance/go-everpay/sdk/schema"
+	serverSchema "github.com/everFinance/go-everpay/sdk/schema"
 	tokSchema "github.com/everFinance/go-everpay/token/schema"
 	"github.com/google/uuid"
 	"github.com/tidwall/gjson"
@@ -21,7 +20,7 @@ import (
 var log = common.NewLog("sdk")
 
 type SDK struct {
-	tokens       map[string]schema.TokenInfo // tag -> TokenInfo
+	tokens       map[string]serverSchema.TokenInfo // tag -> TokenInfo
 	feeRecipient string
 
 	signerType string // ecc, rsa
@@ -48,8 +47,10 @@ func New(signer interface{}, payUrl string) (*SDK, error) {
 		lastNonce:    time.Now().UnixNano() / 1000000,
 		sendTxLocker: sync.Mutex{},
 	}
-	_ = sdk.updatePayInfo()
-
+	err = sdk.updatePayInfo()
+	if err != nil {
+		return nil, err
+	}
 	// sync info from everPay server every 10 mintue
 	go sdk.runSyncInfo()
 	return sdk, nil
@@ -73,7 +74,7 @@ func (s *SDK) updatePayInfo() error {
 		return err
 	}
 
-	tokens := make(map[string]schema.TokenInfo)
+	tokens := make(map[string]serverSchema.TokenInfo)
 	for _, t := range info.TokenList {
 		tokens[t.Tag] = t
 	}
@@ -82,7 +83,7 @@ func (s *SDK) updatePayInfo() error {
 	return nil
 }
 
-func (s *SDK) GetTokens() map[string]schema.TokenInfo {
+func (s *SDK) GetTokens() map[string]serverSchema.TokenInfo {
 	return s.tokens
 }
 
@@ -91,7 +92,110 @@ func (s *SDK) Transfer(tokenTag string, amount *big.Int, to, data string) (*payS
 }
 
 func (s *SDK) Withdraw(tokenTag string, amount *big.Int, chainType, to string) (*paySchema.Transaction, error) {
-	return s.sendWithdraw(tokenTag, chainType, to, amount, "")
+	return s.sendBurnTx(tokenTag, chainType, to, amount, "")
+}
+
+func (s *SDK) Deposit(tokenTag string, amount *big.Int, chainType, to, txData string) (*paySchema.Transaction, error) {
+	return s.sendMintTx(tokenTag, chainType, to, amount, txData)
+}
+
+func (s *SDK) Burn(tokenTag string, amount *big.Int, chainType, to string) (*paySchema.Transaction, error) {
+	return s.sendBurnTx(tokenTag, chainType, to, amount, "")
+}
+func (s *SDK) Mint(tokenTag string, amount *big.Int, chainType, to, txData string) (*paySchema.Transaction, error) {
+	return s.sendMintTx(tokenTag, chainType, to, amount, txData)
+}
+
+func (s *SDK) TransferTokenOwnerTx(tokenTag string, newOwner string) (*paySchema.Transaction, error) {
+	tokenInfo, ok := s.tokens[tokenTag]
+	if !ok {
+		return nil, ErrTokenNotExist
+	}
+	return s.sendTx(tokenInfo, tokSchema.TxActionTransferOwner, "0", newOwner, big.NewInt(0), "")
+}
+
+func (s *SDK) AddWhiteListTx(tokenTag string, whiteList []string) (*paySchema.Transaction, error) {
+	tokenInfo, ok := s.tokens[tokenTag]
+	if !ok {
+		return nil, ErrTokenNotExist
+	}
+	data, err := sjson.Set("", "whiteList", whiteList)
+	if err != nil {
+		return nil, err
+	}
+	return s.sendTx(tokenInfo, tokSchema.TxActionAddWhiteList, "0", s.AccId, big.NewInt(0), data)
+}
+
+func (s *SDK) RemoveWhiteListTx(tokenTag string, whiteList []string) (*paySchema.Transaction, error) {
+	tokenInfo, ok := s.tokens[tokenTag]
+	if !ok {
+		return nil, ErrTokenNotExist
+	}
+	data, err := sjson.Set("", "whiteList", whiteList)
+	if err != nil {
+		return nil, err
+	}
+	return s.sendTx(tokenInfo, tokSchema.TxActionRemoveWhiteList, "0", s.AccId, big.NewInt(0), data)
+}
+
+func (s *SDK) PauseWhiteListTx(tokenTag string, pause bool) (*paySchema.Transaction, error) {
+	tokenInfo, ok := s.tokens[tokenTag]
+	if !ok {
+		return nil, ErrTokenNotExist
+	}
+	data, err := sjson.Set("", "pause", pause)
+	if err != nil {
+		return nil, err
+	}
+	return s.sendTx(tokenInfo, tokSchema.TxActionPauseWhiteList, "0", s.AccId, big.NewInt(0), data)
+}
+
+func (s *SDK) AddBlackListTx(tokenTag string, blackList []string) (*paySchema.Transaction, error) {
+	tokenInfo, ok := s.tokens[tokenTag]
+	if !ok {
+		return nil, ErrTokenNotExist
+	}
+	data, err := sjson.Set("", "blackList", blackList)
+	if err != nil {
+		return nil, err
+	}
+	return s.sendTx(tokenInfo, tokSchema.TxActionAddBlackList, "0", s.AccId, big.NewInt(0), data)
+}
+
+func (s *SDK) RemoveBlackListTx(tokenTag string, blackList []string) (*paySchema.Transaction, error) {
+	tokenInfo, ok := s.tokens[tokenTag]
+	if !ok {
+		return nil, ErrTokenNotExist
+	}
+	data, err := sjson.Set("", "blackList", blackList)
+	if err != nil {
+		return nil, err
+	}
+	return s.sendTx(tokenInfo, tokSchema.TxActionRemoveBlackList, "0", s.AccId, big.NewInt(0), data)
+}
+
+func (s *SDK) PauseBlackListTx(tokenTag string, pause bool) (*paySchema.Transaction, error) {
+	tokenInfo, ok := s.tokens[tokenTag]
+	if !ok {
+		return nil, ErrTokenNotExist
+	}
+	data, err := sjson.Set("", "pause", pause)
+	if err != nil {
+		return nil, err
+	}
+	return s.sendTx(tokenInfo, tokSchema.TxActionPauseBlackList, "0", s.AccId, big.NewInt(0), data)
+}
+
+func (s *SDK) PauseTokenTx(tokenTag string, pause bool) (*paySchema.Transaction, error) {
+	tokenInfo, ok := s.tokens[tokenTag]
+	if !ok {
+		return nil, ErrTokenNotExist
+	}
+	data, err := sjson.Set("", "pause", pause)
+	if err != nil {
+		return nil, err
+	}
+	return s.sendTx(tokenInfo, tokSchema.TxActionPause, "0", s.AccId, big.NewInt(0), data)
 }
 
 func (s *SDK) Bundle(tokenTag string, to string, amount *big.Int, bundleWithSigs paySchema.BundleWithSigs) (*paySchema.Transaction, error) {
@@ -111,7 +215,7 @@ func (s *SDK) sendTransfer(tokenTag string, receiver string, amount *big.Int, da
 	return s.sendTx(tokenInfo, action, fee, receiver, amount, data)
 }
 
-func (s *SDK) sendWithdraw(tokenTag string, targetChainType, receiver string, amount *big.Int, data string) (*paySchema.Transaction, error) {
+func (s *SDK) sendBurnTx(tokenTag string, targetChainType, receiver string, amount *big.Int, data string) (*paySchema.Transaction, error) {
 	tokenInfo, ok := s.tokens[tokenTag]
 	if !ok {
 		return nil, ErrTokenNotExist
@@ -137,6 +241,22 @@ func (s *SDK) sendWithdraw(tokenTag string, targetChainType, receiver string, am
 	return s.sendTx(tokenInfo, action, fee, receiver, amount, txData)
 }
 
+func (s *SDK) sendMintTx(tokenTag string, targetChainType, receiver string, amount *big.Int, data string) (*paySchema.Transaction, error) {
+	tokenInfo, ok := s.tokens[tokenTag]
+	if !ok {
+		return nil, ErrTokenNotExist
+	}
+	if data != "" && !gjson.Valid(data) {
+		return nil, ErrNotJsonData
+	}
+	// add targetChainType in data
+	txData, err := sjson.Set(data, "targetChainType", targetChainType)
+	if err != nil {
+		return nil, err
+	}
+	return s.sendTx(tokenInfo, tokSchema.TxActionMint, "0", receiver, amount, txData)
+}
+
 func (s *SDK) sendBundle(tokenTag string, receiver string, amount *big.Int, bundle paySchema.BundleData) (*paySchema.Transaction, error) {
 	tokenInfo, ok := s.tokens[tokenTag]
 	if !ok {
@@ -153,7 +273,7 @@ func (s *SDK) sendBundle(tokenTag string, receiver string, amount *big.Int, bund
 	return s.sendTx(tokenInfo, action, fee, receiver, amount, string(data))
 }
 
-func (s *SDK) sendTx(tokenInfo schema.TokenInfo, action, fee, receiver string, amount *big.Int, data string) (*paySchema.Transaction, error) {
+func (s *SDK) sendTx(tokenInfo serverSchema.TokenInfo, action, fee, receiver string, amount *big.Int, data string) (*paySchema.Transaction, error) {
 	s.sendTxLocker.Lock()
 	defer s.sendTxLocker.Unlock()
 	if amount == nil {
@@ -162,7 +282,7 @@ func (s *SDK) sendTx(tokenInfo schema.TokenInfo, action, fee, receiver string, a
 	// assemble tx
 	everTx := paySchema.Transaction{
 		TokenSymbol:  tokenInfo.Symbol,
-		Action:       strings.ToLower(action),
+		Action:       action,
 		From:         s.AccId,
 		To:           receiver,
 		Amount:       amount.String(),

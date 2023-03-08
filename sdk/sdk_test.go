@@ -87,21 +87,59 @@ func TestClient_SubmitBundleTx(t *testing.T) {
 	// t.Log(res.HexHash())
 }
 
-func TestBurnTx(t *testing.T) {
-	payUrl := "https://api-dev.everpay.io"
-	signer, err := goether.NewSigner("338f76e7463ed64f98e883aa0f522c92cc5881cbce113894559d703d515a55e1")
+func TestSDK_TransferTokenOwnerTx(t *testing.T) {
+	// payUrl := "https://api-dev.everpay.io" // todo everpay network rpc
+	// signer, err := goether.NewSigner("xxxxx") // todo current token owner private
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// sdk, err := New(signer, payUrl)
+	// assert.NoError(t, err)
+	// tokenTag := "everpay-acnh-0x0000000000000000000000000000000000000002" // todo ACNH tokenTag
+	// newOwner := "0x....." // todo need set newOwner
+	// everTx, err := sdk.TransferTokenOwnerTx(tokenTag,newOwner)
+	// assert.NoError(t, err)
+	// t.Log("everHash", everTx.HexHash())
+}
+
+func TestSDK_Mint(t *testing.T) {
+	// mint ACNH token by token owner
+	payUrl := "https://api-dev.everpay.io"    // todo everpay network rpc
+	signer, err := goether.NewSigner("xxxxx") // todo current token owner private
 	if err != nil {
 		panic(err)
 	}
-	t.Log(signer.Address)
 	sdk, err := New(signer, payUrl)
 	assert.NoError(t, err)
-
-	tokenTag := "bsc-ddd-0xb5eadfdbdb40257d1d24a1432faa2503a867c270"
-	targetChain := "moon"
-	to := "0x63d5bdaba94a5fccb8980bdc738e017df5f9a1fd"
-	amount := big.NewInt(6000000000000000000)
-	res, err := sdk.Withdraw(tokenTag, amount, targetChain, to)
+	tokenTag := "everpay-acnh-0x0000000000000000000000000000000000000002"
+	amount, ok := new(big.Int).SetString("100000000000", 10) // mint 10w token
+	if !ok {
+		panic("amount incorrect")
+	}
+	chainType := "everpay"
+	receiver := "0x...." // token receiver address
+	everTx, err := sdk.Mint(tokenTag, amount, chainType, receiver, "")
 	assert.NoError(t, err)
-	t.Log(res.HexHash())
+	t.Log("everHash:", everTx.HexHash())
+}
+
+func TestSDK_Burn(t *testing.T) {
+	// burn ACNH token
+	payUrl := "https://api-dev.everpay.io"    // todo everpay network rpc
+	signer, err := goether.NewSigner("xxxxx") // todo need burn address private
+	if err != nil {
+		panic(err)
+	}
+	sdk, err := New(signer, payUrl)
+	assert.NoError(t, err)
+	tokenTag := "everpay-acnh-0x0000000000000000000000000000000000000002"
+	amount, ok := new(big.Int).SetString("100000000000", 10) // mint 10w token
+	if !ok {
+		panic("amount incorrect")
+	}
+	chainType := "everpay"
+	to := sdk.AccId
+	everTx, err := sdk.Burn(tokenTag, amount, chainType, to)
+	assert.NoError(t, err)
+	t.Log("everHash:", everTx.HexHash())
 }
