@@ -9,8 +9,10 @@ import (
 	"github.com/everFinance/go-everpay/sdk/schema"
 	"github.com/everFinance/go-everpay/token"
 	tokSchema "github.com/everFinance/go-everpay/token/schema"
+	"github.com/tidwall/sjson"
 	"gopkg.in/h2non/gentleman.v2"
 	"gopkg.in/h2non/gentleman.v2/plugins/body"
+	"time"
 )
 
 type Client struct {
@@ -397,6 +399,63 @@ func (c *Client) SubmitTx(tx paySchema.Transaction) (err error) {
 		err = decodeRespErr(res.Bytes())
 	}
 
+	return
+}
+
+func (c *Client) Mint102WithoutSig(tokenTag, from, to, amount string) (everTx paySchema.Transaction, err error) {
+	return c.AssembleTxWithoutSig(tokenTag, from, to, amount, "0", tokSchema.TxActionMint, "")
+}
+
+func (c *Client) TransferWithoutSig(tokenTag, from, to, amount string) (everTx paySchema.Transaction, err error) {
+	return c.AssembleTxWithoutSig(tokenTag, from, to, amount, "0", tokSchema.TxActionTransfer, "")
+}
+
+func (c *Client) AddWhiteListWithoutSig(tokenTag, from string, whiteList []string) (everTx paySchema.Transaction, err error) {
+	data, err := sjson.Set("", "whiteList", whiteList)
+	if err != nil {
+		return
+	}
+	return c.AssembleTxWithoutSig(tokenTag, from, from, "0", "0", tokSchema.TxActionAddWhiteList, data)
+}
+
+func (c *Client) Burn102WithoutSig(tokenTag, from, amount string) (everTx paySchema.Transaction, err error) {
+	data, err := sjson.Set("", "targetChainType", tokSchema.ChainTypeEverpay)
+	if err != nil {
+		return
+	}
+	return c.AssembleTxWithoutSig(tokenTag, from, tokSchema.ZeroAddress, amount, "0", tokSchema.TxActionBurn, data)
+}
+
+func (c *Client) AssembleTxWithoutSig(tokenTag, from, to, amount, fee, action, data string) (everTx paySchema.Transaction, err error) {
+	info, err := c.GetInfo()
+	if err != nil {
+		return
+	}
+	tokenInfo := schema.TokenInfo{}
+	for _, t := range info.TokenList {
+		if t.Tag == tokenTag {
+			tokenInfo = t
+		}
+		break
+	}
+
+	// assemble tx
+	everTx = paySchema.Transaction{
+		TokenSymbol:  tokenInfo.Symbol,
+		Action:       action,
+		From:         from,
+		To:           to,
+		Amount:       amount,
+		Fee:          fee,
+		FeeRecipient: info.FeeRecipient,
+		Nonce:        fmt.Sprintf("%d", time.Now().UnixNano()/1000000),
+		TokenID:      tokenInfo.ID,
+		ChainType:    tokenInfo.ChainType,
+		ChainID:      tokenInfo.ChainID,
+		Data:         data,
+		Version:      tokSchema.TxVersionV1,
+		Sig:          "",
+	}
 	return
 }
 
