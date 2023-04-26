@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strings"
 	"sync"
 	"time"
 
@@ -85,6 +86,16 @@ func (s *SDK) updatePayInfo() error {
 
 func (s *SDK) GetTokens() map[string]serverSchema.TokenInfo {
 	return s.tokens
+}
+
+func (s *SDK) SymbolToTagArr(symbol string) []string {
+	tagArr := make([]string, 0)
+	for tag, tok := range s.tokens {
+		if strings.ToUpper(tok.Symbol) == strings.ToUpper(symbol) {
+			tagArr = append(tagArr, tag)
+		}
+	}
+	return tagArr
 }
 
 func (s *SDK) Transfer(tokenTag string, amount *big.Int, to, data string) (*paySchema.Transaction, error) {
