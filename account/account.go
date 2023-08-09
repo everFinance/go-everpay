@@ -75,7 +75,7 @@ func (a *Account) VerifySig(tx Transaction) (err error) {
 	case AccountTypeEVM:
 		sig := DecodeEthSig(tx.Sig)
 
-		addr, err := goether.Ecrecover(tx.Hash, sig)
+		_, addr, err := goether.Ecrecover(tx.Hash, sig)
 		if err != nil {
 			return fmt.Errorf("ecrecover failed, hash:%s, sig:%s, err:%v", hexutil.Encode(tx.Hash), tx.Sig, err)
 		}
