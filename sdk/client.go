@@ -418,6 +418,14 @@ func (c *Client) AddWhiteListWithoutSig(tokenTag, from string, whiteList []strin
 	return c.AssembleTxWithoutSig(tokenTag, from, from, "0", "0", tokSchema.TxActionAddWhiteList, data)
 }
 
+func (c *Client) AddBlackListWithoutSig(tokenTag, from string, blackList []string) (everTx paySchema.Transaction, err error) {
+	data, err := sjson.Set("", "blackList", blackList)
+	if err != nil {
+		return
+	}
+	return c.AssembleTxWithoutSig(tokenTag, from, from, "0", "0", tokSchema.TxActionAddBlackList, data)
+}
+
 func (c *Client) Burn102WithoutSig(tokenTag, from, amount string) (everTx paySchema.Transaction, err error) {
 	data, err := sjson.Set("", "targetChainType", tokSchema.ChainTypeEverpay)
 	if err != nil {
