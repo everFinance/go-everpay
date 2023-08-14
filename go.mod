@@ -5,8 +5,8 @@ go 1.17
 require (
 	github.com/ethereum/go-ethereum v1.10.20
 	github.com/everFinance/ethrpc v1.0.4
-	github.com/everFinance/goar v1.4.6
-	github.com/everFinance/goether v1.1.8
+	github.com/everFinance/goar v1.5.7
+	github.com/everFinance/goether v1.1.9
 	github.com/getsentry/sentry-go v0.11.0
 	github.com/google/uuid v1.3.0
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac
@@ -35,6 +35,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32 // indirect
+	github.com/panjf2000/ants/v2 v2.6.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
