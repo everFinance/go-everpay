@@ -131,6 +131,44 @@ func (c *Client) Balances(accid string) (balances schema.AccBalances, err error)
 	return
 }
 
+func (c *Client) BlackList(tokenTag string) ([]string, error) {
+	req := c.cli.Request()
+	req.Path(fmt.Sprintf("/black_list/%s", tokenTag))
+
+	res, err := req.Send()
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+	if !res.Ok {
+		err = decodeRespErr(res.Bytes())
+		return nil, err
+	}
+
+	result := make([]string, 0)
+	err = json.Unmarshal(res.Bytes(), &result)
+	return result, err
+}
+
+func (c *Client) WhiteList(tokenTag string) ([]string, error) {
+	req := c.cli.Request()
+	req.Path(fmt.Sprintf("/white_list/%s", tokenTag))
+
+	res, err := req.Send()
+	if err != nil {
+		return nil, err
+	}
+	defer res.Close()
+	if !res.Ok {
+		err = decodeRespErr(res.Bytes())
+		return nil, err
+	}
+
+	result := make([]string, 0)
+	err = json.Unmarshal(res.Bytes(), &result)
+	return result, err
+}
+
 // Txs
 // option args: tokenId, action, withoutAction
 // default value: page(1), orderBy(desc)
