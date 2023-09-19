@@ -26,21 +26,23 @@ func newSubscribeTx(c *Client, fq schema.FilterQuery) *SubscribeTx {
 }
 
 func (s *SubscribeTx) run() {
-	isAccTxs := s.filterQuery.Address != ""
 	interval := 1 * time.Second
 	t1 := time.NewTimer(interval)
 	cursorId := s.filterQuery.StartCursor
+	orderBy := "ASC"
+	limit := 100
 	for {
 		var txs schema.Txs
 		var err error
 		t1.Reset(interval)
 		select {
 		case <-t1.C:
-			if isAccTxs {
-				txs, err = s.client.CursorTxsByAcc(s.filterQuery.Address, cursorId, s.filterQuery.TokenTag, s.filterQuery.Action, s.filterQuery.WithoutAction)
-			} else {
-				txs, err = s.client.CursorTxs(cursorId, s.filterQuery.TokenTag, s.filterQuery.Action, s.filterQuery.WithoutAction)
-			}
+			txs, err = s.client.Txs(cursorId, orderBy, limit, schema.TxOpts{
+				Address:       s.filterQuery.Address,
+				TokenTag:      s.filterQuery.TokenTag,
+				Action:        s.filterQuery.Action,
+				WithoutAction: s.filterQuery.WithoutAction,
+			})
 
 			if err != nil {
 				interval = 10 * time.Second

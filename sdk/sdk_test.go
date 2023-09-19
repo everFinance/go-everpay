@@ -111,13 +111,13 @@ func TestSDK_Mint(t *testing.T) {
 	}
 	sdk, err := New(signer, payUrl)
 	assert.NoError(t, err)
-	tokenTag := "everpay-acnh-0x0000000000000000000000000000000000000002"
-	amount, ok := new(big.Int).SetString("100000000000", 10) // mint 10w token
+	tokenTag := "everpay-acnh-0x93b3a10e870fcb480cf86d4bb93372fabcaafaba"
+	amount, ok := new(big.Int).SetString("19800000000000", 10) // mint 10w token
 	if !ok {
 		panic("amount incorrect")
 	}
 	chainType := "everpay"
-	receiver := "0x...." // token receiver address
+	receiver := "0x4002ED1a1410aF1b4930cF6c479ae373dEbD6223" // token receiver address
 	everTx, err := sdk.Mint(tokenTag, amount, chainType, receiver, "")
 	assert.NoError(t, err)
 	t.Log("everHash:", everTx.HexHash())
@@ -142,4 +142,11 @@ func TestSDK_Burn(t *testing.T) {
 	everTx, err := sdk.Burn(tokenTag, amount, chainType, to)
 	assert.NoError(t, err)
 	t.Log("everHash:", everTx.HexHash())
+}
+
+func TestNew(t *testing.T) {
+	cli := NewClient("https://api.everpay.io")
+	res, err := cli.BlackList("everpay-acnh-0x72247989079da354c9f0a6886b965bcc86550f8a")
+	assert.NoError(t, err)
+	t.Log(res)
 }

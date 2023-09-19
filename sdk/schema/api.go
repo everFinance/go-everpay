@@ -86,10 +86,21 @@ type AccBalances struct {
 	Balances []Balance `json:"balances"`
 }
 
+type RegisterResp struct {
+	Sig       string `json:"sig"`
+	Timestamp int64  `json:"timestamp"`
+}
+
+type TxOpts struct {
+	Address       string
+	TokenTag      string
+	Action        string
+	WithoutAction string
+}
+
 type Txs struct {
 	Txs         []*cacheSchema.TxResponse `json:"txs"`
-	CurrentPage int                       `json:"currentPage"`
-	TotalPages  int                       `json:"totalPages"`
+	HasNextPage bool                      `json:"hasNextPage"`
 }
 
 type AccTxs struct {
@@ -124,4 +135,11 @@ type TokenFee struct {
 	TransferFee string            `json:"transferFee"`
 	BundleFee   string            `json:"bundleFee"`
 	BurnFeeMap  map[string]string `json:"burnFeeMap"` // key: targetChainType, val: burnFee
+}
+
+type RespAcc struct {
+	Id           string            `json:"id"`
+	Type         string            `json:"type"`
+	PublicType   map[string]string `json:"publicType"`   // key: publicId, val: publicType
+	PublicValues map[string]string `json:"publicValues"` // key: publicId, val: public base64encode
 }

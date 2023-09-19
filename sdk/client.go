@@ -169,17 +169,47 @@ func (c *Client) WhiteList(tokenTag string) ([]string, error) {
 	return result, err
 }
 
-// Txs
-// option args: tokenId, action, withoutAction
-// default value: page(1), orderBy(desc)
-func (c *Client) Txs(page int, orderBy, tokenTag string, action, withoutAction string) (txs schema.Txs, err error) {
+func (c *Client) AccInfo(accid string) (resp schema.RespAcc, err error) {
+	req := c.cli.Request()
+	req.Path(fmt.Sprintf("/account/%s", accid))
+	res, err := req.Send()
+	if err != nil {
+		return
+	}
+	defer res.Close()
+	if !res.Ok {
+		err = decodeRespErr(res.Bytes())
+		return
+	}
+	err = json.Unmarshal(res.Bytes(), &resp)
+	return
+}
+
+func (c *Client) Txs(startCursor int64, orderBy string, limit int, opts schema.TxOpts) (txs schema.Txs, err error) {
 	req := c.cli.Request()
 	req.Path("/txs")
-	req.AddQuery("page", fmt.Sprintf("%v", page))
-	req.AddQuery("order", orderBy)
-	req.AddQuery("tokenTag", tokenTag)
-	req.AddQuery("action", action)
-	req.AddQuery("withoutAction", withoutAction)
+	if startCursor > 0 {
+		req.AddQuery("cursor", fmt.Sprintf("%d", startCursor))
+	}
+	if len(orderBy) > 0 {
+		req.AddQuery("order", orderBy)
+	}
+	if limit > 0 {
+		req.AddQuery("count", fmt.Sprintf("%d", limit))
+	}
+
+	if len(opts.Address) > 0 {
+		req.AddQuery("address", opts.Address)
+	}
+	if len(opts.TokenTag) > 0 {
+		req.AddQuery("tokenTag", opts.TokenTag)
+	}
+	if len(opts.Action) > 0 {
+		req.AddQuery("action", opts.Action)
+	}
+	if len(opts.WithoutAction) > 0 {
+		req.AddQuery("withoutAction", opts.WithoutAction)
+	}
 
 	res, err := req.Send()
 	if err != nil {
@@ -193,86 +223,6 @@ func (c *Client) Txs(page int, orderBy, tokenTag string, action, withoutAction s
 
 	txs = schema.Txs{}
 	err = json.Unmarshal(res.Bytes(), &txs)
-	return
-}
-
-// TxsByAcc
-// option args: tokenId, action, withoutAction
-// default value: page(1), orderBy(desc)
-func (c *Client) TxsByAcc(accid string, page int, orderBy string, tokenTag, action, withoutAction string) (txs schema.AccTxs, err error) {
-	req := c.cli.Request()
-	req.Path(fmt.Sprintf("/txs/%s", accid))
-	req.AddQuery("page", fmt.Sprintf("%v", page))
-	req.AddQuery("order", orderBy)
-	req.AddQuery("tokenTag", tokenTag)
-	req.AddQuery("action", action)
-	req.AddQuery("withoutAction", withoutAction)
-
-	res, err := req.Send()
-	if err != nil {
-		return
-	}
-	defer res.Close()
-	if !res.Ok {
-		err = decodeRespErr(res.Bytes())
-		return
-	}
-
-	txs = schema.AccTxs{}
-	err = json.Unmarshal(res.Bytes(), &txs)
-	return
-}
-
-func (c *Client) CursorTxs(startCursor int64, tokenTag, action, withoutAction string) (txs schema.Txs, err error) {
-	req := c.cli.Request()
-	req.Path("/txs")
-	req.AddQuery("tokenTag", tokenTag)
-	req.AddQuery("action", action)
-	req.AddQuery("withoutAction", withoutAction)
-	if startCursor == 0 {
-		startCursor = 1
-	}
-	req.AddQuery("cursor", fmt.Sprintf("%d", startCursor))
-
-	res, err := req.Send()
-	if err != nil {
-		return
-	}
-	defer res.Close()
-	if !res.Ok {
-		err = decodeRespErr(res.Bytes())
-		return
-	}
-
-	txs = schema.Txs{}
-	err = json.Unmarshal(res.Bytes(), &txs)
-	return
-}
-
-func (c *Client) CursorTxsByAcc(accid string, startCursor int64, tokenTag, action, withoutAction string) (txs schema.Txs, err error) {
-	req := c.cli.Request()
-	req.Path(fmt.Sprintf("/txs/%s", accid))
-	req.AddQuery("tokenTag", tokenTag)
-	req.AddQuery("action", action)
-	req.AddQuery("withoutAction", withoutAction)
-	if startCursor == 0 {
-		startCursor = 1
-	}
-	req.AddQuery("cursor", fmt.Sprintf("%d", startCursor))
-
-	res, err := req.Send()
-	if err != nil {
-		return
-	}
-	defer res.Close()
-	if !res.Ok {
-		err = decodeRespErr(res.Bytes())
-		return
-	}
-
-	accTxs := schema.AccTxs{}
-	err = json.Unmarshal(res.Bytes(), &accTxs)
-	txs = accTxs.Txs
 	return
 }
 

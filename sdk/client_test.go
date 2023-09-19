@@ -45,18 +45,9 @@ func TestBalances(t *testing.T) {
 }
 
 func TestTxs(t *testing.T) {
-	txs, err := testClient.Txs(1, "asc", "", "", "")
+	txs, err := testClient.Txs(1, "asc", 0, schema.TxOpts{})
 	assert.NoError(t, err)
-	assert.Equal(t, 1, txs.CurrentPage)
 	assert.Equal(t, "HOKX5WM3bZw4mTXBnVj6llXgNsHcnK-Pfz4s4f5n1LA", txs.Txs[0].ID)
-}
-
-func TestTxsByAcc(t *testing.T) {
-	txs, err := testClient.TxsByAcc("0xa06b79E655Db7D7C3B3E7B2ccEEb068c3259d0C9", 1, "asc", "", "", "")
-	assert.NoError(t, err)
-	assert.Equal(t, "0xa06b79E655Db7D7C3B3E7B2ccEEb068c3259d0C9", txs.AccId)
-	assert.Equal(t, 1, txs.CurrentPage)
-	assert.Equal(t, "HOKX5WM3bZw4mTXBnVj6llXgNsHcnK-Pfz4s4f5n1LA", txs.Txs.Txs[0].ID)
 }
 
 func TestTxByHash(t *testing.T) {
