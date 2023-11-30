@@ -1,8 +1,8 @@
 package sdk
 
 import (
+	"crypto/sha256"
 	"errors"
-	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/everFinance/goar"
 	"github.com/everFinance/goar/utils"
@@ -18,7 +18,8 @@ func (s *SDK) Sign(msg string) (string, error) {
 	switch s.signerType {
 	case RSASignerType:
 		signer := s.signer.(*goar.Signer)
-		sig, err := signer.SignMsg(accounts.TextHash([]byte(msg)))
+		hash := sha256.Sum256([]byte(msg))
+		sig, err := signer.SignMsg(hash[:])
 		if err != nil {
 			return "", err
 		}
